@@ -35,14 +35,17 @@ jobs:
 
         # Inicializar Terraform
         - name: Terraform Init
+          working-directory: ./infra
           run: terraform init
 
         # Planejar Terraform
         - name: Terraform Plan
+          working-directory: ./infra
           run: terraform plan
 
         # Aplicar Terraform
         - name: Terraform Apply
+          working-directory: ./infra
           run: terraform apply -auto-approve
           env:
             S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
