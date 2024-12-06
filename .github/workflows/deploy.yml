@@ -10,6 +10,45 @@ on:
       - develop
 
 jobs:
+  configure_aws:
+      name: Deploy AWS Infrastructure
+      runs-on: ubuntu-latest
+
+      steps:
+        # Check out o código do repositório
+        - name: Checkout Repository
+          uses: actions/checkout@v3
+
+        # Configurar credenciais da AWS
+        - name: Configure AWS CLI
+          uses: aws-actions/configure-aws-credentials@v3
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: ${{ secrets.AWS_REGION }}
+
+        # Configurar Terraform
+        - name: Setup Terraform
+          uses: hashicorp/setup-terraform@v2
+          with:
+            terraform_version: 1.5.0
+
+        # Inicializar Terraform
+        - name: Terraform Init
+          run: terraform init
+
+        # Planejar Terraform
+        - name: Terraform Plan
+          run: terraform plan
+
+        # Aplicar Terraform
+        - name: Terraform Apply
+          run: terraform apply -auto-approve
+          env:
+            S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+            IAM_ROLE_NAME: ${{ secrets.IAM_ROLE_NAME }}
+            LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+
   upload_file:
     name: Upload File to S3
     runs-on: ubuntu-latest
