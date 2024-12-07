@@ -10,3 +10,8 @@ variable "lambda_runtime" {
 variable "s3_bucket_name" {
   description = "Nome do bucket S3"
 }
+
+variable "iam_role_name" {
+  description = "Nome da role IAM"
+}
+

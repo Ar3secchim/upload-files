@@ -1,3 +1,7 @@
+data "aws_s3_bucket" "s3_bucket" {
+  bucket = var.s3_bucket_name
+}
+
 resource "aws_iam_role" "lambda_role" {
   name = var.iam_role_name
 
@@ -29,8 +33,8 @@ resource "aws_iam_role_policy" "lambda_policy" {
         ]
         Effect   = "Allow"
         Resource = [
-          aws_s3_bucket.ada_bucket.arn,
-          "${aws_s3_bucket.ada_bucket.arn}/*"
+          data.aws_s3_bucket.s3_bucket.arn,
+          "${data.aws_s3_bucket.s3_bucket.arn}/*"
         ]
       },
       {

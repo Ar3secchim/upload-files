@@ -1,3 +1,7 @@
+data "aws_iam_role" "aws_iam_role" {
+  name = var.iam_role_name
+}
+
 resource "null_resource" "zip_lambda" {
   provisioner "local-exec" {
     command = <<EOT
@@ -10,7 +14,7 @@ resource "null_resource" "zip_lambda" {
 resource "aws_lambda_function" "s3_event_lambda" {
   filename         = "${path.module}/lambda_handler.zip"
   function_name    = var.lambda_name
-  role             = aws_iam_role.lambda_role.arn
+  role             = data.aws_iam_role.aws_iam_role.arn
   handler          = "lambda_function.lambda_handler"
   runtime          = var.lambda_runtime
   source_code_hash = filebase64sha256("${path.module}/lambda_handler.zip")
@@ -23,8 +27,6 @@ resource "aws_lambda_function" "s3_event_lambda" {
 
   depends_on = [null_resource.zip_lambda]
 }
-
-
 
 resource "aws_lambda_permission" "allow_s3_to_invoke_lambda" {
   statement_id  = "AllowS3InvokeLambda"
