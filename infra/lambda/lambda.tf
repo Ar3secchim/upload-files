@@ -27,10 +27,8 @@ resource "aws_lambda_function" "s3_event_lambda" {
   runtime          = var.lambda_runtime
   source_code_hash = filebase64sha256("${path.module}/../../infra/lambda_handler.zip")
 
-  # Garante que o ZIP seja criado antes da Lambda
   depends_on = [null_resource.zip_lambda]
 }
-
 
 resource "aws_lambda_permission" "allow_s3_to_invoke_lambda" {
   statement_id  = "AllowS3InvokeLambda"
