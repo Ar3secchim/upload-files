@@ -1,5 +1,5 @@
-data "aws_s3_bucket" "s3_bucket" {
-  bucket = var.s3_bucket_name
+variable "s3_bucket_arn" {
+  description = "ARN do bucket S3"
 }
 
 resource "aws_iam_role" "lambda_role" {
@@ -20,8 +20,8 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 resource "aws_iam_role_policy" "lambda_policy" {
-  name   = "${var.iam_role_name}-policy"
-  role   = aws_iam_role.lambda_role.id
+  name = "${var.iam_role_name}-policy"
+  role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -31,10 +31,10 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "s3:GetObject",
           "s3:ListBucket"
         ]
-        Effect   = "Allow"
+        Effect = "Allow"
         Resource = [
-          data.aws_s3_bucket.s3_bucket.arn,
-          "${data.aws_s3_bucket.s3_bucket.arn}/*"
+          var.s3_bucket_arn,
+          "${var.s3_bucket_arn}/*"
         ]
       },
       {
@@ -49,3 +49,11 @@ resource "aws_iam_role_policy" "lambda_policy" {
     ]
   })
 }
+
+output "iam_role_name" {
+  value = aws_iam_role.lambda_role.name
+}
+output "iam_role_arn" {
+  value = aws_iam_role.lambda_role.arn
+}
+

@@ -20,3 +20,11 @@ resource "aws_s3_bucket_notification" "ada_bucket_notification" {
 
  depends_on = [data.aws_lambda_function.aws_lambda_permission]
 }
+
+output "bucket_name" {
+  value = aws_s3_bucket.ada_bucket.bucket
+}
+
+output "bucket_arn" {
+  value = aws_s3_bucket.ada_bucket.arn
+}

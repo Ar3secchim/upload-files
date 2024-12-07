@@ -1,37 +1,46 @@
-data "aws_iam_role" "aws_iam_role" {
-  name = var.iam_role_name
+variable "s3_bucket_arn" {
+  description = "ARN do bucket S3"
 }
 
+variable "iam_role_arn" {
+  description = "ARN da role IAM"
+}
 resource "null_resource" "zip_lambda" {
   provisioner "local-exec" {
     command = <<EOT
-      cd ../lambda && \
-      zip -r ../infra/lambda_handler.zip .
+      cd ../app/lambda && \
+      zip -r ../../infra/lambda_handler.zip .
     EOT
+  }
+
+  triggers = {
+    # Recria o ZIP se o código mudar
+    source_hash = filebase64sha256("../app/lambda/lambda_function.py")
   }
 }
 
 resource "aws_lambda_function" "s3_event_lambda" {
-  filename         = "${path.module}/lambda_handler.zip"
+  filename         = "${path.module}/../../infra/lambda_handler.zip"
   function_name    = var.lambda_name
-  role             = data.aws_iam_role.aws_iam_role.arn
+  role             = var.iam_role_arn
   handler          = "lambda_function.lambda_handler"
   runtime          = var.lambda_runtime
-  source_code_hash = filebase64sha256("${path.module}/lambda_handler.zip")
+  source_code_hash = filebase64sha256("${path.module}/../../infra/lambda_handler.zip")
 
-  environment {
-    variables = {
-      BUCKET_NAME = var.s3_bucket_name
-    }
-  }
-
+  # Garante que o ZIP seja criado antes da Lambda
   depends_on = [null_resource.zip_lambda]
 }
+
 
 resource "aws_lambda_permission" "allow_s3_to_invoke_lambda" {
   statement_id  = "AllowS3InvokeLambda"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.s3_event_lambda.function_name
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.ada_bucket.arn
+  source_arn    = var.s3_bucket_arn
+}
+
+
+output "lambda_function_arn" {
+  value = aws_lambda_function.s3_event_lambda.arn
 }
