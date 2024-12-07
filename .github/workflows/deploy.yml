@@ -55,7 +55,7 @@ jobs:
   upload_file:
     name: Upload File to S3
     runs-on: ubuntu-latest
-    depends-on: configure_aws
+    needs: configure_aws
 
     steps:
       - name: Checkout Repository
