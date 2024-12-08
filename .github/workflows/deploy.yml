@@ -11,79 +11,78 @@ on:
 
 jobs:
   configure_aws:
-      name: Deploy AWS Infrastructure
-      runs-on: ubuntu-latest
+    name: Deploy AWS Infrastructure
+    runs-on: ubuntu-latest
 
-      steps:
-        # Check out o código do repositório
-        - name: Checkout Repository
-          uses: actions/checkout@v3
+    steps:
+      # Check out o código do repositório
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-        # Configurar credenciais da AWS
-        - name: Configure AWS CLI
-          uses: aws-actions/configure-aws-credentials@v3
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: ${{ secrets.AWS_REGION }}
+      # Configurar credenciais da AWS
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-        # Configurar Terraform
-        - name: Setup Terraform
-          uses: hashicorp/setup-terraform@v2
-          with:
-            terraform_version: 1.5.0
+      # Configurar Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
-        # Inicializar Terraform
-        - name: Terraform Init
-          working-directory: ./infra
-          run: terraform init
+      # Inicializar Terraform
+      - name: Terraform Init
+        working-directory: ./infra
+        run: terraform init
 
-        # Planejar Terraform
-        - name: Terraform Plan
-          working-directory: ./infra
-          run: terraform plan -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8"
+      # Planejar Terraform
+      - name: Terraform Plan
+        working-directory: ./infra
+        run: terraform plan -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8"
 
-        # Aplicar Terraform
-        - name: Terraform Apply
-          working-directory: ./infra
-          run: terraform apply -auto-approve -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8"
-          env:
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            AWS_REGION: ${{ secrets.AWS_REGION }}
+      # Aplicar Terraform
+      - name: Terraform Apply
+        working-directory: ./infra
+        run: terraform apply -auto-approve -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
 
   upload_file:
     name: Upload File to S3
     runs-on: ubuntu-latest
     needs: configure_aws
 
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-  steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
+      - name: Install Dependencies
+        run: pip install boto3 python-dotenv
 
-    - name: Install Dependencies
-      run: pip install boto3 python-dotenv
+      - name: Set Environment Variables
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+        run: |
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
+          echo "BUCKET_NAME=${{ secrets.BUCKET_NAME }}" >> $GITHUB_ENV
 
-    - name: Set Environment Variables
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-      run: |
-        echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
-        echo "BUCKET_NAME=${{ secrets.BUCKET_NAME }}" >> $GITHUB_ENV
-
-    - name: Run Upload Script
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-      run: python ./app/upload_to_s3.py
+      - name: Run Upload Script
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+        run: python ./app/upload_to_s3.py
