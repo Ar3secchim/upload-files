@@ -18,3 +18,7 @@ variable "lambda_runtime" {
 variable "iam_role_name" {
   description = "Nome da role IAM"
 }
+
+variable "sns_topic_name" {
+  description = "Nome do tópico SNS"
+}

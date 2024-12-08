@@ -1,10 +1,19 @@
 provider "aws" {
   region = var.aws_region
 }
+
+module "sns" {
+  source         = "./sns"
+  sns_topic_name = var.sns_topic_name
+}
+
 module "s3" {
   source         = "./s3"
   s3_bucket_name = var.s3_bucket_name
   lambda_name    = module.lambda.lambda_function_arn
+  bucket_arn     = module.s3.bucket_arn
+  sns_topic_arn  = module.sns.sns_topic_arn
+  sns_topic_name = module.sns.sns_topic_name
 }
 
 module "iam" {
@@ -12,6 +21,7 @@ module "iam" {
   iam_role_name  = var.iam_role_name
   s3_bucket_name = module.s3.bucket_name
   s3_bucket_arn  = module.s3.bucket_arn
+  sns_topic_arn  = module.sns.sns_topic_arn
 }
 
 module "lambda" {
