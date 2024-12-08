@@ -24,3 +24,4 @@ module "lambda" {
   iam_role_arn   = module.iam.iam_role_arn
   s3_bucket_arn  = module.s3.bucket_arn
 }
+
