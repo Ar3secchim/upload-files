@@ -26,3 +26,7 @@ variable "sns_topic_name" {
 variable "sqs_queue_notification_s3" {
   description = "value of the SQS queue"
 }
+
+variable "dynamodb_table_name" {
+  description = "Nome da tabela DynamoDB"
+}

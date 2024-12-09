@@ -27,14 +27,14 @@ resource "aws_iam_role_policy" "lambda_policy" {
   role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [
       {
         Action = [
           "s3:GetObject",
           "s3:ListBucket"
-        ]
-        Effect = "Allow"
+        ],
+        Effect = "Allow",
         Resource = [
           var.s3_bucket_arn,
           "${var.s3_bucket_arn}/*"
@@ -45,19 +45,30 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
-        ]
-        Effect   = "Allow"
+        ],
+        Effect   = "Allow",
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ],
+        Effect   = "Allow",
+        Resource = "arn:aws:dynamodb:*:*:table/files_table"
       },
       {
         Action = [
           "sqs:ReceiveMessage",
           "sqs:DeleteMessage",
-          "sqs:GetQueueAttributes"
-        ]
-        Effect   = "Allow"
+          "sqs:GetQueueAttributes",
+          "sqs:GetQueueUrl"
+        ],
+        Effect   = "Allow",
         Resource = var.sqs_policy_arn
-      }
+      },
     ]
   })
 }
@@ -107,7 +118,6 @@ resource "aws_sqs_queue_policy" "sqs_policy" {
     ]
   })
 }
-
 
 
 output "iam_role_name" {

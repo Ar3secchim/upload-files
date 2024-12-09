@@ -14,3 +14,8 @@ variable "iam_role_name" {
 variable "sqs_queue_arn" {
   description = "ARN da fila SQS"
 }
+
+
+variable "dynamodb_table_name" {
+  description = "The name of the DynamoDB table"
+}
