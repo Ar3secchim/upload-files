@@ -27,14 +27,14 @@ resource "aws_iam_role_policy" "lambda_policy" {
   role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [
       {
         Action = [
           "s3:GetObject",
           "s3:ListBucket"
-        ]
-        Effect = "Allow"
+        ],
+        Effect = "Allow",
         Resource = [
           var.s3_bucket_arn,
           "${var.s3_bucket_arn}/*"
@@ -45,19 +45,30 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
-        ]
-        Effect   = "Allow"
+        ],
+        Effect   = "Allow",
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ],
+        Effect   = "Allow",
+        Resource = "arn:aws:dynamodb:*:*:table/files_table"
       },
       {
         Action = [
           "sqs:ReceiveMessage",
           "sqs:DeleteMessage",
-          "sqs:GetQueueAttributes"
-        ]
-        Effect   = "Allow"
+          "sqs:GetQueueAttributes",
+          "sqs:GetQueueUrl"
+        ],
+        Effect   = "Allow",
         Resource = var.sqs_policy_arn
-      }
+      },
     ]
   })
 }
@@ -108,31 +119,6 @@ resource "aws_sqs_queue_policy" "sqs_policy" {
   })
 }
 
-# Security group for RDS instance
-resource "aws_security_group" "rds_sg" {
-  name_prefix = "rds-sg"
-  vpc_id      = var.vpn_id
-
-  ingress {
-    from_port   = 3306 # MySQL
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr] # Usar o CIDR do VPC
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "rds-security-group"
-  }
-}
-
-
 
 output "iam_role_name" {
   value = aws_iam_role.lambda_role.name
@@ -147,8 +133,4 @@ output "sns_topic_policy_arn" {
 
 output "sqs_policy_arn" {
   value = aws_sqs_queue_policy.sqs_policy.policy
-}
-
-output "rds_sg_id" {
-  value = aws_security_group.rds_sg.id
 }

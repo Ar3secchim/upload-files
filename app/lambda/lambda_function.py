@@ -1,102 +1,72 @@
 import json
 import boto3
-import pymysql
 import os
+from datetime import datetime
 
-# Configurações do banco de dados
-DB_USER = os.environ["DB_USER"]
-DB_PASSWORD = os.environ["DB_PASSWORD"]
-DB_NAME = os.environ["DB_NAME"]
+# Inicializa o cliente DynamoDB
+dynamodb = boto3.resource("dynamodb")
+table_name = os.environ["DYNAMODB_TABLE"]
+table = dynamodb.Table(table_name)
+
+# Inicializa o cliente S3
+s3_client = boto3.client("s3")
 
 def lambda_handler(event, context):
-    # Garantir que a tabela exista
-    ensure_table_exists()
-
     print("Event Received:", json.dumps(event, indent=2))
 
-    # Inicialize o cliente S3
-    s3_client = boto3.client("s3")
-
-    # Processar cada mensagem
+    # Processa cada mensagem no evento SQS
     for record in event["Records"]:
-        try:
-            # Decodificar mensagem do SQS
-            message_body = json.loads(record["body"])
-            s3_event = message_body["Records"][0]
+        # Extrai o corpo da mensagem
+        message_body = json.loads(record["body"])
 
-            s3_bucket = s3_event["s3"]["bucket"]["name"]
-            s3_object_key = s3_event["s3"]["object"]["key"]
+        # Verifica se a mensagem é de um SNS
+        if "Message" in message_body:
+            sns_message = json.loads(message_body["Message"])
 
-            print(f"Processing file {s3_object_key} from bucket {s3_bucket}.")
+            # Verifica se há eventos do S3
+            if "Records" in sns_message:
+                s3_event = sns_message["Records"][0]
+                s3_bucket = s3_event["s3"]["bucket"]["name"]
+                s3_object_key = s3_event["s3"]["object"]["key"]
 
-            # Baixar o arquivo do S3
-            local_file_path = f"/tmp/{os.path.basename(s3_object_key)}"
-            s3_client.download_file(s3_bucket, s3_object_key, local_file_path)
+                print(f"Processing file {s3_object_key} from bucket {s3_bucket}.")
 
-            # Contar linhas do arquivo
-            num_lines = count_lines(local_file_path)
-            print(f"File {s3_object_key} has {num_lines} lines.")
+                # Faz download do arquivo para o diretório temporário
+                local_file_path = f"/tmp/{os.path.basename(s3_object_key)}"
+                try:
+                    s3_client.download_file(s3_bucket, s3_object_key, local_file_path)
+                    print(f"File downloaded to {local_file_path}")
 
-            # Inserir no banco de dados
-            insert_into_db(s3_object_key, num_lines)
+                    # Conta as linhas do arquivo
+                    num_lines = count_lines(local_file_path)
 
-        except Exception as e:
-            print(f"Erro ao processar a mensagem: {e}")
+                    # Grava no DynamoDB
+                    write_to_dynamodb(s3_object_key, num_lines)
+                except Exception as e:
+                    print(f"Erro ao processar o arquivo {s3_object_key}: {e}")
+            else:
+                print("Nenhum evento do S3 encontrado na mensagem do SNS.")
+        else:
+            print("Mensagem não reconhecida no corpo do SQS.")
 
-    return {"statusCode": 200, "body": "Messages processed successfully"}
-
-def ensure_table_exists():
-    """
-    Garante que a tabela 'files' exista no banco de dados.
-    """
-    connection = pymysql.connect(
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME
-    )
-    try:
-        with connection.cursor() as cursor:
-            create_table_sql = """
-            CREATE TABLE IF NOT EXISTS files (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                file_name VARCHAR(255) NOT NULL,
-                num_lines INT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            """
-            cursor.execute(create_table_sql)
-            connection.commit()
-            print("Tabela 'files' verificada/criada com sucesso.")
-    except Exception as e:
-        print(f"Erro ao criar/verificar a tabela: {e}")
-    finally:
-        connection.close()
+    return {"statusCode": 200, "body": "Processed successfully"}
 
 def count_lines(file_path):
-    """
-    Conta o número de linhas no arquivo.
-    """
+    """Conta o número de linhas no arquivo."""
     with open(file_path, "r") as file:
         lines = file.readlines()
     return len(lines)
 
-def insert_into_db(file_name, num_lines):
-    """
-    Insere os dados no banco de dados.
-    """
-    connection = pymysql.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME
-    )
+def write_to_dynamodb(file_name, num_lines):
+    """Grava informações no DynamoDB."""
     try:
-        with connection.cursor() as cursor:
-            sql = "INSERT INTO files (file_name, num_lines) VALUES (%s, %s)"
-            cursor.execute(sql, (file_name, num_lines))
-            connection.commit()
-            print(f"Dados inseridos no banco: {file_name}, {num_lines}")
+        response = table.put_item(
+            Item={
+                "file_name": file_name,
+                "num_lines": num_lines,
+                "created_at": datetime.utcnow().isoformat()
+            }
+        )
+        print(f"Item inserido com sucesso: {response}")
     except Exception as e:
-        print(f"Erro ao inserir no banco de dados: {e}")
-    finally:
-        connection.close()
+        print(f"Erro ao inserir no DynamoDB: {e}")
