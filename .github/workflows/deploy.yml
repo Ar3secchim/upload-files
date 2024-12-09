@@ -41,7 +41,7 @@ jobs:
       # Planejar Terraform
       - name: Terraform Plan
         working-directory: ./infra
-        run: terraform plan -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8"
+        run: terraform plan -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8" -var="sns_topic_name=${{ secrets.SNS_TOPIC_NAME }}"
 
       # Aplicar Terraform
       - name: Terraform Apply
