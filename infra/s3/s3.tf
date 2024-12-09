@@ -11,7 +11,7 @@ resource "aws_s3_bucket" "ada_bucket" {
 }
 
 # event notification for S3 bucket to Lambda function
-resource "aws_s3_bucket_notification" "ada_bucket_notifications" {
+resource "aws_s3_bucket_notification" "lambda_bucket_notifications" {
   bucket = aws_s3_bucket.ada_bucket.id
 
   # Notificação para Lambda
@@ -20,14 +20,19 @@ resource "aws_s3_bucket_notification" "ada_bucket_notifications" {
     events              = ["s3:ObjectCreated:*"]
   }
 
-  # Notificação para SNS
+  depends_on = [
+    data.aws_lambda_function.aws_lambda_permission,
+  ]
+}
+
+resource "aws_s3_bucket_notification" "sns_bucket_notifications" {
+  bucket = aws_s3_bucket.ada_bucket.id
   topic {
     topic_arn = var.sns_topic_arn
     events    = ["s3:ObjectCreated:*"]
   }
 
   depends_on = [
-    data.aws_lambda_function.aws_lambda_permission,
     var.sns_topic_policy_arn
   ]
 }
