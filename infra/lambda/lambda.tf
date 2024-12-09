@@ -1,10 +1,8 @@
-variable "s3_bucket_arn" {
-  description = "ARN do bucket S3"
-}
-
 variable "iam_role_arn" {
   description = "ARN da role IAM"
 }
+
+
 data "archive_file" "lambda" {
   type        = "zip"
   source_dir  = "../app/lambda"
@@ -24,7 +22,6 @@ resource "null_resource" "zip_lambda" {
     source_hash = data.archive_file.lambda.output_base64sha256
   }
 }
-
 resource "aws_lambda_function" "s3_event_lambda" {
   filename      = "lambda_handler.zip"
   function_name = var.lambda_name
@@ -37,12 +34,13 @@ resource "aws_lambda_function" "s3_event_lambda" {
   depends_on = [null_resource.zip_lambda]
 }
 
-resource "aws_lambda_permission" "allow_s3_to_invoke_lambda" {
-  statement_id  = "AllowS3InvokeLambda"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.s3_event_lambda.function_name
-  principal     = "s3.amazonaws.com"
-  source_arn    = var.s3_bucket_arn
+# Mapeamento de eventos do SQS para Lambda
+resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
+  event_source_arn = var.sqs_queue_arn
+  function_name    = aws_lambda_function.s3_event_lambda.arn
+  batch_size       = 10
+
+  depends_on = [var.sqs_queue_arn]
 }
 
 

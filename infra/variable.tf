@@ -22,3 +22,7 @@ variable "iam_role_name" {
 variable "sns_topic_name" {
   description = "Nome do tópico SNS"
 }
+
+variable "sqs_queue_notification_s3" {
+  description = "value of the SQS queue"
+}
