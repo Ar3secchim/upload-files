@@ -20,3 +20,13 @@ variable "sqs_policy_arn" {
   description = "ARN da política da fila SQS"
   type        = string
 }
+
+variable "vpn_id" {
+  description = "ID da VPN"
+  type        = string
+}
+
+variable "vpc_cidr" {
+  description = "CIDR da VPC"
+  type        = string
+}

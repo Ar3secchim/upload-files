@@ -1,1 +1,3 @@
 boto3
+pymysql
+urllib3==1.26.15

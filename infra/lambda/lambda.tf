@@ -12,8 +12,11 @@ data "archive_file" "lambda" {
 resource "null_resource" "zip_lambda" {
   provisioner "local-exec" {
     command = <<EOT
-      cd ../app/lambda && \
-      zip -r ../../infra/lambda/lambda_handler.zip .
+      mkdir -p ../app/build && \
+      pip install -r ../app/lambda/requirements.txt -t ../app/build && \
+      cp ../app/lambda/lambda_function.py ../app/build && \
+      cd ../app/build && \
+      zip -r ../../infra/lambda_handler.zip .
     EOT
   }
 
@@ -31,6 +34,20 @@ resource "aws_lambda_function" "s3_event_lambda" {
   runtime          = var.lambda_runtime
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
+
+  vpc_config {
+    security_group_ids = var.secury_group
+    subnet_ids         = var.subnet_ids
+  }
+
+  environment {
+    variables = {
+      DB_HOST     = var.db_host
+      DB_USER     = var.db_user
+      DB_PASSWORD = var.db_password
+      DB_NAME     = var.db_name
+    }
+  }
   depends_on = [null_resource.zip_lambda]
 }
 
@@ -41,6 +58,10 @@ resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
   batch_size       = 10
 
   depends_on = [var.sqs_queue_arn]
+  lifecycle {
+    ignore_changes        = [event_source_arn, function_name]
+    create_before_destroy = true
+  }
 }
 
 

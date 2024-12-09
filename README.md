@@ -21,7 +21,7 @@ A solução será desenvolvida pelos seguintes componentes:
   - Ler a mensagem do SQS.
   - Processar o arquivo (contar as linhas).
   - Registrar os dados (nome do arquivo e quantidade de linhas) no banco de dados.
-- O RDS é utilizado para armazenar metadados de arquivos frequentemente consultados.
+- Banco de dados mysql para armazernar os dados.
 
 ### 3. Requisitos Técnicos
 
@@ -30,7 +30,4 @@ A solução será desenvolvida pelos seguintes componentes:
   - Uso da biblioteca boto3 para integração com o AWS S3.
   - Geração de arquivos com uuid para nomes únicos.
 - Código da infraestrutura
-  - Terraform para provisionar os recursos AWS (S3, SNS, SQS, Lambda, Elasticache, e RDS).
-- Monitoramento
-  - Utilizar CloudWatch para monitorar métricas do Lambda, filas do SQS e eventos no S3.
-  - Configuração de alarmes para eventos críticos (ex: erro no Lambda ou fila acumulada).
+  - Terraform para provisionar os recursos AWS (S3, SNS, SQS, Lambda, e RDS).

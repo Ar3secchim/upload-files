@@ -108,6 +108,30 @@ resource "aws_sqs_queue_policy" "sqs_policy" {
   })
 }
 
+# Security group for RDS instance
+resource "aws_security_group" "rds_sg" {
+  name_prefix = "rds-sg"
+  vpc_id      = var.vpn_id
+
+  ingress {
+    from_port   = 3306 # MySQL
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr] # Usar o CIDR do VPC
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "rds-security-group"
+  }
+}
+
 
 
 output "iam_role_name" {
@@ -123,4 +147,8 @@ output "sns_topic_policy_arn" {
 
 output "sqs_policy_arn" {
   value = aws_sqs_queue_policy.sqs_policy.policy
+}
+
+output "rds_sg_id" {
+  value = aws_security_group.rds_sg.id
 }
