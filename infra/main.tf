@@ -8,12 +8,13 @@ module "sns" {
 }
 
 module "s3" {
-  source         = "./s3"
-  s3_bucket_name = var.s3_bucket_name
-  lambda_name    = module.lambda.lambda_function_arn
-  bucket_arn     = module.s3.bucket_arn
-  sns_topic_arn  = module.sns.sns_topic_arn
-  sns_topic_name = module.sns.sns_topic_name
+  source               = "./s3"
+  s3_bucket_name       = var.s3_bucket_name
+  lambda_name          = module.lambda.lambda_function_arn
+  bucket_arn           = module.s3.bucket_arn
+  sns_topic_arn        = module.sns.sns_topic_arn
+  sns_topic_name       = module.sns.sns_topic_name
+  sns_topic_policy_arn = module.iam.sns_topic_policy_arn
 }
 
 module "iam" {

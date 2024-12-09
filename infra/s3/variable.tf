@@ -17,3 +17,7 @@ variable "sns_topic_arn" {
 variable "sns_topic_name" {
   description = "Nome do tópico SNS"
 }
+variable "sns_topic_policy_arn" {
+  description = "ARN da política do tópico SNS"
+  type        = string
+}

@@ -83,3 +83,6 @@ output "iam_role_arn" {
   value = aws_iam_role.lambda_role.arn
 }
 
+output "sns_topic_policy_arn" {
+  value = aws_sns_topic_policy.s3_event_topic_policy.arn
+}

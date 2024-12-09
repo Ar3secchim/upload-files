@@ -28,8 +28,12 @@ resource "aws_s3_bucket_notification" "s3_event_notification" {
 
   topic {
     topic_arn = var.sns_topic_arn
-    events    = ["s3:ObjectCreated:*"] # Dispara quando objetos são criados no S3
+    events    = ["s3:ObjectCreated:*"]
   }
+
+  depends_on = [
+    var.sns_topic_policy_arn
+  ]
 }
 
 output "bucket_name" {
