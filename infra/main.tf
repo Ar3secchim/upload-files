@@ -2,11 +2,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-module "sns" {
-  source         = "./sns"
-  sns_topic_name = var.sns_topic_name
-}
-
 module "s3" {
   source               = "./s3"
   s3_bucket_name       = var.s3_bucket_name
@@ -18,11 +13,15 @@ module "s3" {
 }
 
 module "iam" {
-  source         = "./iam"
-  iam_role_name  = var.iam_role_name
+  source        = "./iam"
+  iam_role_name = var.iam_role_name
+
   s3_bucket_name = module.s3.bucket_name
   s3_bucket_arn  = module.s3.bucket_arn
+
   sns_topic_arn  = module.sns.sns_topic_arn
+  sqs_queue_url  = module.sqs.sqs_queue_url
+  sqs_policy_arn = module.sqs.sqs_queue_arn
 }
 
 module "lambda" {
@@ -36,3 +35,16 @@ module "lambda" {
   s3_bucket_arn  = module.s3.bucket_arn
 }
 
+
+module "sns" {
+  source         = "./sns"
+  sns_topic_name = var.sns_topic_name
+
+  sqs_queue_arn  = module.sqs.sqs_queue_arn
+  sqs_policy_arn = module.sqs.sqs_queue_arn
+}
+
+module "sqs" {
+  source                    = "./sqs"
+  sqs_queue_notification_s3 = var.sqs_queue_notification_s3
+}
