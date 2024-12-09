@@ -29,10 +29,9 @@ module "lambda" {
   lambda_name    = var.lambda_name
   lambda_runtime = var.lambda_runtime
 
-  s3_bucket_name = module.s3.bucket_name
-  iam_role_name  = module.iam.iam_role_name
-  iam_role_arn   = module.iam.iam_role_arn
-  s3_bucket_arn  = module.s3.bucket_arn
+  iam_role_name = module.iam.iam_role_name
+  iam_role_arn  = module.iam.iam_role_arn
+  sqs_queue_arn = module.sqs.sqs_queue_arn
 }
 
 

@@ -21,6 +21,7 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 # Policy to allow Lambda function to read from S3 bucket
+# Policy to allow Lambda function to access SQS
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "${var.iam_role_name}-policy"
   role = aws_iam_role.lambda_role.id
@@ -47,6 +48,15 @@ resource "aws_iam_role_policy" "lambda_policy" {
         ]
         Effect   = "Allow"
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ]
+        Effect   = "Allow"
+        Resource = var.sqs_policy_arn
       }
     ]
   })
