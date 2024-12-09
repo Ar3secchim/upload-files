@@ -27,18 +27,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Verificar se o serviço já existe
-      - name: Check Existing Service
-        id: check-service
-        run: |
-          SERVICE_NAME=${{ secrets.LAMBDA_FUNCTION_NAME }}
-          EXISTING_SERVICE=$(aws lambda get-function --function-name $SERVICE_NAME 2>/dev/null || echo "null")
-          if [ "$EXISTING_SERVICE" != "null" ]; then
-            echo "service_exists=true" >> $GITHUB_ENV
-          else
-            echo "service_exists=false" >> $GITHUB_ENV
-          fi
-
       # Configurar Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -53,30 +41,16 @@ jobs:
       # Planejar Terraform
       - name: Terraform Plan
         working-directory: ./infra
-        if: env.service_exists == 'false'
         run: terraform plan -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8" -var="sns_topic_name=${{ secrets.SNS_TOPIC_NAME }}" -var="sqs_queue_notification_s3=${{ secrets.SQS_QUEUE_NOTIFICATION_S3 }}"
 
       # Aplicar Terraform
       - name: Terraform Apply
         working-directory: ./infra
-        if: env.service_exists == 'false'
         run: terraform apply -auto-approve -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8" -var="sns_topic_name=${{ secrets.SNS_TOPIC_NAME }}" -var="sqs_queue_notification_s3=${{ secrets.SQS_QUEUE_NOTIFICATION_S3 }}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-
-      # Atualizar serviço se já existir
-      - name: Update Existing Service
-        if: env.service_exists == 'true'
-        run: |
-          echo "Atualizando serviço existente..."
-          aws lambda update-function-configuration \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --runtime python3.8 \
-            --handler app.handler \
-            --timeout 15 \
-            --memory-size 256
 
   upload_file:
     name: Upload File to S3
