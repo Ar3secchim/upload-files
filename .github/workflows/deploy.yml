@@ -41,12 +41,12 @@ jobs:
       # Planejar Terraform
       - name: Terraform Plan
         working-directory: ./infra
-        run: terraform plan -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8" -var="sns_topic_name=${{ secrets.SNS_TOPIC_NAME }}"
+        run: terraform plan -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8" -var="sns_topic_name=${{ secrets.SNS_TOPIC_NAME }}" -var="sqs_queue_notification_s3=${{ secrets.SQS_QUEUE_NOTIFICATION_S3 }}" -var="dynamodb_table_name=${{ secrets.DYNAMODB_TABLE }}"
 
       # Aplicar Terraform
       - name: Terraform Apply
         working-directory: ./infra
-        run: terraform apply -auto-approve -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8" -var="sns_topic_name=${{ secrets.SNS_TOPIC_NAME }}"
+        run: terraform apply -auto-approve -var="iam_role_name=${{ secrets.IAM_ROLE_NAME }}" -var="s3_bucket_name=${{ secrets.BUCKET_NAME }}"  -var="lambda_name=${{ secrets.LAMBDA_FUNCTION_NAME}}" -var="lambda_runtime=python3.8" -var="sns_topic_name=${{ secrets.SNS_TOPIC_NAME }}" -var="sqs_queue_notification_s3=${{ secrets.SQS_QUEUE_NOTIFICATION_S3 }}" -var="dynamodb_table_name=${{ secrets.DYNAMODB_TABLE }}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
