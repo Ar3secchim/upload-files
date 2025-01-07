@@ -57,7 +57,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "dynamodb:Query"
         ],
         Effect   = "Allow",
-        Resource = "arn:aws:dynamodb:*:*:table/files_table"
+        Resource = "arn:aws:dynamodb:*:*:table/files_table_ada"
       },
       {
         Action = [
